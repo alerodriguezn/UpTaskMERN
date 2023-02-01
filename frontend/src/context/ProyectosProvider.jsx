@@ -269,9 +269,11 @@ const ProyectosProvider = ({ children }) => {
       const { data } = await clienteAxios.put(`/tareas/${tarea.id}`, tarea, config)
       setAlerta({})
       setModalFormularioTarea(false)
-      const proyectoActualizado = { ...proyecto }
-      proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === data._id ? data : tareaState)
-      setProyecto(proyectoActualizado)
+
+      //Socket
+
+      socket.emit('actualizar tarea', data)
+
 
     } catch (error) {
       console.log(error)
@@ -426,11 +428,13 @@ const ProyectosProvider = ({ children }) => {
       }
 
       const { data } = await clienteAxios.post(`/tareas/estado/${id}`, {}, config)
-      const proyectoActualizado = { ...proyecto }
-      proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === data._id ? data : tareaState)
-      setProyecto(proyectoActualizado)
+
       setTarea({})
       setAlerta({})
+
+      //socket
+
+      socket.emit('cambiar estado', data)
 
 
     } catch (error) {
@@ -452,6 +456,18 @@ const ProyectosProvider = ({ children }) => {
   const eliminarTareaProyecto = tarea => {
     const proyectoActualizado = { ...proyecto }
     proyectoActualizado.tareas = proyectoActualizado.tareas.filter(tareaState => tareaState._id !== tarea._id)
+    setProyecto(proyectoActualizado)
+  }
+
+  const actualizarTareaProyecto = tarea => {
+    const proyectoActualizado = { ...proyecto }
+    proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === tarea._id ? tarea : tareaState)
+    setProyecto(proyectoActualizado)
+  }
+
+  const cambiarEstadoTarea = tarea => {
+    const proyectoActualizado = { ...proyecto }
+    proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === tarea._id ? tarea : tareaState)
     setProyecto(proyectoActualizado)
   }
 
@@ -485,7 +501,9 @@ const ProyectosProvider = ({ children }) => {
         buscador,
         handleBuscador,
         submitTareasProyecto,
-        eliminarTareaProyecto
+        eliminarTareaProyecto,
+        actualizarTareaProyecto,
+        cambiarEstadoTarea
       }}
     >
       {children}
