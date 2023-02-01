@@ -21,7 +21,6 @@ const OlvidePassword = () => {
 
     try {
       const { data } = await clienteAxios.post(`/usuarios/olvide-password`, { email })
-      console.log(data)
       setAlerta({
         msg: data.msg,
         error: false

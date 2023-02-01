@@ -1,7 +1,9 @@
 import { useState, useEffect, createContext } from "react";
 import clienteAxios from "../config/clienteAxios";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 
+let socket
 
 const ProyectosContext = createContext()
 
@@ -47,6 +49,10 @@ const ProyectosProvider = ({ children }) => {
       }
     }
     obtenerProyectos()
+  }, [])
+
+  useEffect(() => {
+    socket = io(import.meta.env.VITE_BACKEND_URL)
   }, [])
 
   const handleModalTarea = () => {
@@ -234,11 +240,13 @@ const ProyectosProvider = ({ children }) => {
       const { data } = await clienteAxios.post('/tareas', tarea, config)
 
       //Agrega la tarea al state
-      const proyectoActualizado = { ...proyecto }
-      proyectoActualizado.tareas = [...proyecto.tareas, data]
-      setProyecto(proyectoActualizado)
+
       setAlerta({})
       setModalFormularioTarea(false)
+
+      //Socket io
+
+      socket.emit('nueva tarea', data)
 
 
     } catch (error) {
@@ -343,10 +351,10 @@ const ProyectosProvider = ({ children }) => {
         }
       }
 
-      const { data } = await clienteAxios.post(`/proyectos/colaboradores/${proyecto._id}`, email , config)
+      const { data } = await clienteAxios.post(`/proyectos/colaboradores/${proyecto._id}`, email, config)
       setAlerta({
         msg: data.msg,
-        error:false
+        error: false
       })
       setColaborador({})
       setTimeout(() => {
@@ -368,7 +376,7 @@ const ProyectosProvider = ({ children }) => {
 
   const eliminarColaborador = async () => {
     try {
-      
+
       const token = localStorage.getItem("token")
       if (!token) return
 
@@ -379,9 +387,9 @@ const ProyectosProvider = ({ children }) => {
         }
       }
 
-      const { data } = await clienteAxios.post(`/proyectos/eliminar-colaborador/${proyecto._id}`, {id : colaborador._id} , config)
-      const proyectoActualizado = {...proyecto}
-      proyectoActualizado.colaboradores = proyectoActualizado.colaboradores.filter(colaboradorState => colaboradorState._id !== colaborador._id )
+      const { data } = await clienteAxios.post(`/proyectos/eliminar-colaborador/${proyecto._id}`, { id: colaborador._id }, config)
+      const proyectoActualizado = { ...proyecto }
+      proyectoActualizado.colaboradores = proyectoActualizado.colaboradores.filter(colaboradorState => colaboradorState._id !== colaborador._id)
       setProyecto(proyectoActualizado)
       setAlerta({
         msg: data.msg,
@@ -394,9 +402,9 @@ const ProyectosProvider = ({ children }) => {
       }, 2000);
 
 
-      
-      
-    }catch (error) {
+
+
+    } catch (error) {
       setAlerta({
         msg: error.response.data.msg,
         error: true
@@ -415,14 +423,14 @@ const ProyectosProvider = ({ children }) => {
         }
       }
 
-      const { data } = await clienteAxios.post(`/tareas/estado/${id}`, {} ,config)
-      const proyectoActualizado = {...proyecto}
-      proyectoActualizado.tareas = proyectoActualizado.tareas.map( tareaState => tareaState._id === data._id ? data : tareaState )
-      setProyecto(proyectoActualizado) 
+      const { data } = await clienteAxios.post(`/tareas/estado/${id}`, {}, config)
+      const proyectoActualizado = { ...proyecto }
+      proyectoActualizado.tareas = proyectoActualizado.tareas.map(tareaState => tareaState._id === data._id ? data : tareaState)
+      setProyecto(proyectoActualizado)
       setTarea({})
       setAlerta({})
 
-      
+
     } catch (error) {
       console.log(error.response)
     }
@@ -431,7 +439,14 @@ const ProyectosProvider = ({ children }) => {
   const handleBuscador = () => {
     setBuscador(!buscador)
   }
-  
+
+  //Socket.io
+  const submitTareasProyecto = (tarea) => {
+    const proyectoActualizado = { ...proyecto }
+    proyectoActualizado.tareas = [...proyectoActualizado.tareas, tarea]
+    setProyecto(proyectoActualizado)
+  }
+
 
   return (
     <ProyectosContext.Provider
@@ -460,7 +475,8 @@ const ProyectosProvider = ({ children }) => {
         eliminarColaborador,
         completarTarea,
         buscador,
-        handleBuscador
+        handleBuscador,
+        submitTareasProyecto
       }}
     >
       {children}

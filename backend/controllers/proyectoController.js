@@ -10,7 +10,6 @@ const obtenerProyectos = async (req, res) => {
 
         ]
     }).select('-tareas')
-    console.log(proyectos)
     res.json(proyectos)
     
 }
