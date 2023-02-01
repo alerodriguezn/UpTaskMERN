@@ -16,7 +16,7 @@ const Proyecto = () => {
     const params = useParams()
     const admin = useAdmin()
 
-    const { obtenerProyecto, proyecto, cargando, handleModalTarea, alerta, submitTareasProyecto } = useProyectos()
+    const { obtenerProyecto, proyecto, cargando, handleModalTarea, alerta, submitTareasProyecto, eliminarTareaProyecto } = useProyectos()
     useEffect(() => {
         obtenerProyecto(params.id)
     }, [])
@@ -37,7 +37,11 @@ const Proyecto = () => {
             if(tareaNueva.proyecto === proyecto._id){
                 submitTareasProyecto(tareaNueva)
             }
-            
+        })
+        socket.on('tarea eliminada', tareaEliminada => {
+            if(tareaEliminada.proyecto === proyecto._id){
+                eliminarTareaProyecto(tareaEliminada)
+            }
         })
     })
 
